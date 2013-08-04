@@ -67,4 +67,32 @@ function ResourceManager:loadGfxQuad2D ( file_path, coords )
   return image
 end
 
+function ResourceManager:loadTiledImage ( definition )
+  local tiled_image = MOAITileDeck2D.new ()
+  local file_path = ASSETS_PATH .. definition.file_name
 
+  tiled_image:setTexture ( file_path )
+  -- Load x by y tilemap
+  tiled_image:setSize ( unpack(definition.tile_map_size) )
+
+  return tiled_image
+end
+
+function ResourceManager:loadFont ( definition )
+  local font = MOAIFont.new ()
+  local file_path = ASSETS_PATH .. definition.file_name
+  -- load specific characters defined in glyphs
+  font:loadFromTTF ( file_path, definition.glyphs,
+                     definition.font_size, definition.dpi )
+  return font
+end
+
+function ResourceManager:loadSound ( definition )
+  local sound = MOAIUntzSound.new ()
+  local file_path = ASSETS_PATH .. definition.file_name
+  sound:load( file_path )
+  sound:setVolume( definition.volume )
+  sound:setLooping( definition.loop )
+
+  return sound
+end
