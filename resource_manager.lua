@@ -2,6 +2,14 @@ module ( "ResourceManager", package.seeall )
 -- Module in charge of creating & storing
 -- decks and assets in general
 
+require "resource_defs"
+
+-- Asset type constants
+ASSET_TYPE_IMG = 0
+ASSET_TYPE_TILED_IMG = 1
+ASSET_TYPE_FONT = 2
+ASSET_TYPE_SOUND = 3
+
 ASSETS_PATH = 'assets/'
 
 local cache = {}
@@ -22,13 +30,13 @@ end
 
 function ResourceManager:load ( name )
   -- Load resource into cache
-  local resource_def = ResourceDefinitions.get( name )
+  local resource_def = ResourceDefinitions:get( name )
   
   if not resource_def then
     print("Error: Missing resource definition for " .. name)
   else
     local resource
-    
+
     if (resource_def.type == ASSET_TYPE_IMG) then
       resource = self:loadImage( resource_def )
     elseif (resource_def.type == ASSET_TYPE_TILED_IMG) then

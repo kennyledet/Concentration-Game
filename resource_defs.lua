@@ -17,3 +17,8 @@ function ResourceDefinitions:remove(name)
   defs[name] = nil
 end
 
+function ResourceDefinitions:setDefinitions( rdefs )
+    -- Iterate through definitions, call set on each
+    for k, v in pairs(rdefs) do self:set(k, v) end
+end
+
