@@ -11,7 +11,6 @@ function InputManager:initialize ()
                                 pointer_x, pointer_y)
             end
         end
-    -- body
     MOAIInputMgr.device.pointer:setCallback (pointerCallback)
     end
 end

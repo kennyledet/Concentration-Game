@@ -2,6 +2,7 @@ module("Game", package.seeall)
 
 require "resource_defs"
 require "resource_manager"
+require "input_mgr"
 
 -- Asset type constants
 ASSET_TYPE_IMG = 0
@@ -15,6 +16,10 @@ GRID_ROWS = 4
 GRID_TILE_WIDTH = 62
 GRID_TILE_HEIGHT = 62
 BACK_TILE = 1
+EMPTY_TILE = 12
+
+-- Time before swapping back tiles
+DELAY_TIME = 0.5
 
 local base_defs = { -- core resource definitions
     tiles = {
@@ -24,16 +29,102 @@ local base_defs = { -- core resource definitions
     },
 }
 
+function sleepCoroutine( time )
+    local timer = MOAITimer.new ()
+    timer:setSpan(time)
+    timer:start ()
+    MOAICoroutine.blockOnAction(timer)
+end
+
+function Game:removedTile( column, row )
+    return self.tiles.grid:getTile(column, row) == EMPTY_TILE
+end
+
+function Game:removeTiles ()
+    -- Set empty tile on selected cells
+    sleepCoroutine(DELAY_TIME)
+    self.tiles.grid:setTile(self.selected_cells[1][1], self.selected_cells[1][2], EMPTY_TILE)
+    self.tiles.grid:setTile(self.selected_cells[2][1], self.selected_cells[2][2], EMPTY_TILE)
+    self.selected_cells = {nil, nil}
+end
+
+function Game:resetTiles ()
+    -- Set back tile on both selected cells
+    sleepCoroutine(DELAY_TIME)
+    self.tiles.grid:setTile(self.selected_cells[1][1], self.selected_cells[1][2], BACK_TILE)
+    self.tiles.grid:setTile(self.selected_cells[2][1], self.selected_cells[2][2], BACK_TILE)
+    self.selected_cells = {nil, nil}
+end
+
+function Game:swapTile( column, row )
+    -- Swap tile in rendered grid with value from distribution grid
+    local val = self.distribution_grid:getTile(column, row)
+    self.tiles.grid:setTile(column, row, val)
+end
+
+function Game:chooseCell( column, row )
+    print(column, row)
+    if not self.selected_cells[1] then
+        if not self:removedTile(column, row) then
+            self.selected_cells[1] = {column, row}
+            self:swapTile(column, row) -- swap to reveal color
+        end
+    else
+        if (self.selected_cells[1][1] == column) and (self.selected_cells[1][2] == row) then -- if selected tile selected previously
+            self.selected_cells[2] = {column, row}
+            self:resetTiles ()
+        else
+            if not self:removedTile(column, row) then
+                self.selected_cells[2] = {column, row}
+                self:swapTile(column, row)
+
+                -- Main gameplay, check for match
+                local val1 = self.distribution_grid:getTile(unpack(self.selected_cells[1]))
+                local val2 = self.distribution_grid:getTile(unpack(self.selected_cells[2]))
+
+                if (val1 == val2) then
+                    self:removeTiles ()
+                else
+                    self:resetTiles ()
+                end
+            end
+        end
+    end
+end
+
+function Game:processInput ()
+    if InputManager:isDown () and not self.was_clicking then -- select tile
+        x, y = MOAIInputMgr.device.pointer:getLoc () -- grab mouse pos. in window coord system
+        print(x, y)
+
+        world_x, world_y = self.layer:wndToWorld(x, y)
+        -- get offset in px from bottom-left corner of grid
+        model_x, model_y = self.tiles.prop:worldToModel(world_x, world_y)
+        -- get cell column & row indices by dividing model dimensions by cell dimensions
+        cell_col = math.floor(model_x / GRID_TILE_WIDTH) + 1
+        cell_row = math.floor(model_y / GRID_TILE_HEIGHT) + 1 
+
+        self:chooseCell(cell_col, cell_row)
+    end
+
+    self.was_clicking = InputManager:isDown ()
+end
+
 function Game:start ()
-    -- Begin & handle main game loop
+    -- Begin & handle game loop
     self:initialize ()
 
     -- Input processing
-    
+    self.was_clicking = false
+
+    while (true) do
+        self:processInput ()
+        coroutine.yield () -- Delegate flow to main routine
+    end
 end
 
 function Game:initialize ()
-    -- Create new layer, add to viewport
+    -- Run all initialization
     self.layer = MOAILayer2D.new ()
     self.layer:setViewport( viewport )
 
@@ -46,6 +137,7 @@ function Game:initialize ()
 end
 
 function Game:initializeTiles ()
+    -- Initialize new grid and cover with back tiles
     local grid = MOAIGrid.new ()
     grid:setSize(GRID_COLS, GRID_ROWS,
                  GRID_TILE_WIDTH, GRID_TILE_HEIGHT)
@@ -89,7 +181,4 @@ function Game:restartGameplay ()
     end
 
     self.selected_cells = { nil, nil }
-
-
-
 end
