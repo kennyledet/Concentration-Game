@@ -71,7 +71,7 @@ function Game:chooseCell( column, row )
         end
     else
         if (self.selected_cells[1][1] == column) and (self.selected_cells[1][2] == row) then -- if selected tile selected previously
-            self.selected_cells[2] = {column, row}
+            self.selected_cells[2] = {column, row} -- force tile reset
             self:resetTiles ()
         else
             if not self:removedTile(column, row) then
