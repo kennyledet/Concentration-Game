@@ -46,6 +46,9 @@ function Game:removeTiles ()
     self.tiles.grid:setTile(self.selected_cells[1][1], self.selected_cells[1][2], EMPTY_TILE)
     self.tiles.grid:setTile(self.selected_cells[2][1], self.selected_cells[2][2], EMPTY_TILE)
     self.selected_cells = {nil, nil}
+
+    -- Check if user won, show congrats
+    if 
 end
 
 function Game:resetTiles ()
