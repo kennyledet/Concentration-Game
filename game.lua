@@ -48,7 +48,7 @@ function Game:removeTiles ()
     self.selected_cells = {nil, nil}
 
     -- Check if user won, show congrats
-    if 
+    -- if 
 end
 
 function Game:resetTiles ()
